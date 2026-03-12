@@ -1,9 +1,19 @@
 ﻿using SaintCoinach;
 using Newtonsoft.Json;
-using SaintCoinach.Libra;
 
-const string GameDirectory = @"C:\SteamLibrary\steamapps\common\FINAL FANTASY XIV Online";
-ARealmReversed realm = new ARealmReversed(GameDirectory, SaintCoinach.Ex.Language.English);
+string GameDirectory = "";
+ARealmReversed realm = null;
+
+while (realm == null) {
+	Console.WriteLine("Please input path to FFXIV folder (e.g. \'C:\\SteamLibrary\\steamapps\\common\\FINAL FANTASY XIV Online)\'");
+	GameDirectory = Console.ReadLine();
+	try {
+		realm = new ARealmReversed(GameDirectory, SaintCoinach.Ex.Language.English);
+	}
+	catch (Exception ex) {
+		Console.WriteLine("Invalid FFXIV path");
+	}
+}
 
 List<DataModel> data = new List<DataModel>();
 
