@@ -5,7 +5,7 @@ string GameDirectory = "";
 ARealmReversed realm = null;
 
 while (realm == null) {
-	Console.WriteLine("Please input path to FFXIV folder (e.g. \'C:\\SteamLibrary\\steamapps\\common\\FINAL FANTASY XIV Online)\'");
+	Console.WriteLine("Please input path to FFXIV folder (e.g. C:\\SteamLibrary\\steamapps\\common\\FINAL FANTASY XIV Online)");
 	GameDirectory = Console.ReadLine();
 	try {
 		realm = new ARealmReversed(GameDirectory, SaintCoinach.Ex.Language.English);
@@ -16,6 +16,7 @@ while (realm == null) {
 }
 
 List<DataModel> data = new List<DataModel>();
+List<string> addedNames = new List<string>();
 
 var statusSheet = realm.GameData.GetSheet<SaintCoinach.Xiv.Status>();
 
@@ -24,27 +25,32 @@ foreach (var status in statusSheet) {
 	string gamepath = status?.Icon?.ToString() ?? "";
 	string iconID = gamepath != "" ? gamepath.Substring(15, 6) : "";
 
-	if (realm.Packs.TryGetFile(gamepath, out var file)) {
-		if (file is SaintCoinach.Imaging.ImageFile imgFile) {
-			var image = imgFile.GetImage();
+	if (status?.Name != String.Empty || addedNames.Contains(status?.Name)) {
+		if (realm.Packs.TryGetFile(gamepath, out var file)) {
+			if (file is SaintCoinach.Imaging.ImageFile imgFile) {
+				var image = imgFile.GetImage();
 
-			var target = new FileInfo(Path.Combine("output", "statusicons", iconID));
-			if (!target.Directory.Exists) {
-				target.Directory.Create();
+				var target = new FileInfo(Path.Combine("output", "statusicons", iconID));
+				if (!target.Directory.Exists) {
+					target.Directory.Create();
+				}
+				var pngPath = target.FullName.Substring(0, target.FullName.Length - target.Extension.Length) + ".png";
+				image.Save(pngPath);
 			}
-			var pngPath = target.FullName.Substring(0, target.FullName.Length - target.Extension.Length) + ".png";
-			image.Save(pngPath);
 		}
-	}
 
-	var statusData = new DataModel() {
-		ID = status?.Key ?? 0,
-		Name = status?.Name ?? "",
-		Icon = "/images/statusicons/" + iconID + ".png",
-		GamePath = gamepath
-	};
-	data.Add(statusData);
-	Console.WriteLine("Adding Status: {0}, Saving Icon: {1}", statusData.Name, statusData.Icon);
+		var statusData = new DataModel() {
+			ID = status?.Key ?? 0,
+			Name = status?.Name ?? "",
+			Icon = "/images/statusicons/" + iconID + ".png",
+			GamePath = gamepath
+		};
+		data.Add(statusData);
+		Console.WriteLine("Adding Status: {0}, Saving Icon: {1}", statusData.Name, statusData.Icon);
+	} else {
+		Console.WriteLine("Skipping empty/duplicate data");
+	}
+	
 }
 
 string json = JsonConvert.SerializeObject(data.ToArray(), Formatting.Indented);
